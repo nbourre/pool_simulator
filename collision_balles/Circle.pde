@@ -4,6 +4,7 @@ class Circle {
   private float diametre;
   PVector position;
   PVector velocity;
+  PVector acceleration = new PVector (0, 0);
   float radius;
   float mass = 1;
   
@@ -36,6 +37,10 @@ class Circle {
   
   void update() {
     position.add(velocity);
+    
+    // On arrete les deplacements imperceptible
+    velocity.x = Math.abs (velocity.x) < 0.001 ? 0 : velocity.x;
+    velocity.y = Math.abs(velocity.y) < 0.001 ? 0 : velocity.y;
   }
   
   void display() {
@@ -43,7 +48,8 @@ class Circle {
     ellipse (position.x, position.y, diametre, diametre);
   }
   
-  boolean checkRectangleCollision (Circle circle) {
+  // Axis-aligned bounding box collision check... AABBCC ;)
+  boolean AABBCC (Circle circle) {
     float x = position.x - radius;
     float y = position.y - radius;
     
@@ -79,18 +85,25 @@ class Circle {
   }
   
   // Keep velocity temporary
-  PVector tempVel = null;
-  
+  PVector tempVel = null;  
   
   PVector checkCircleCollision (Circle autre) {
     PVector result = null;
     
-    if (checkRectangleCollision(autre)) {
+    if (AABBCC(autre)) {
       PVector vDistance = PVector.sub (autre.position, this.position);
       
       float magnitude = vDistance.mag();
       
-      if (magnitude < this.radius + autre.radius) {
+      float sumRadius = this.radius + autre.radius;
+      
+      if (magnitude < sumRadius) {
+        
+        // si la magnitude est plus petite que la somme des rayons, alors les cercles
+        // s'intersecte. On recule le cercle pour empecher de rester poigner dans l'autre
+        float deltaPct = (sumRadius - magnitude) / magnitude;
+        this.position.x = this.position.x - this.velocity.x * deltaPct;
+        this.position.y = this.position.y - this.velocity.y * deltaPct;
         
         float collisionPointX =
             ((this.position.x * autre.radius) + (autre.position.x * this.radius))
@@ -100,19 +113,37 @@ class Circle {
             ((this.position.y * autre.radius) + (autre.position.y * this.radius))
             / (this.radius + autre.radius);
         
-        result = new PVector (collisionPointX, collisionPointY);                        
+        result = new PVector (collisionPointX, collisionPointY);
         
-        tempVel = new PVector();
+        PVector un = result.get();
+        un.sub (this.position);
+        un.normalize();
         
+        PVector ut = new PVector (-un.y, un.x);
+        
+        float v1n = PVector.dot(un, this.velocity);
+        float v1t = PVector.dot(ut, this.velocity);
+        float v2n = PVector.dot(un, autre.velocity);
+        float v2t = PVector.dot(ut, autre.velocity);
+
         // Formule
         // (b1.vitesse.x * (b1.mass - b2.mass) + (2 * b2.mass * b2.vitesse.x))
-        // / (b1.mass + b2.mass)
-        tempVel.x =
-          (this.velocity.x * (this.mass - autre.mass) + (2 * autre.mass * autre.velocity.x))
-          / (this.mass + autre.mass);
-        tempVel.y =
-          (this.velocity.y * (this.mass - autre.mass) + (2 * autre.mass * autre.velocity.y))
-          / (this.mass + autre.mass);
+        // / (b1.mass + b2.mass)        
+        v1n = (v1n * (this.mass - autre.mass) + 2 * autre.mass * v2n) / (this.mass + autre.mass);
+        
+        un.mult (v1n);
+        ut.mult (v1t);
+        
+        un.add (ut);
+        
+        tempVel = un.get();        
+
+//        tempVel.x =
+//          (this.velocity.x * (this.mass - autre.mass) + (2 * autre.mass * autre.velocity.x))
+//          / (this.mass + autre.mass);
+//        tempVel.y =
+//          (this.velocity.y * (this.mass - autre.mass) + (2 * autre.mass * autre.velocity.y))
+//          / (this.mass + autre.mass);
       }      
     }
     

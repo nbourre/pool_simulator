@@ -1,13 +1,24 @@
 import java.awt.Rectangle;
 
+// QUESTIONS POTENTIELLES :
+// AJOUTER LA FRICTION
+// CORRIGER LE BOGUE AVEC LES CONTACTS RECTILIGNES
+// AJOUTER LES NUMEROS SUR LES BALLES
+// AJOUTER LA TABLE INCLUANT LES TROUS
+// AJOUTER LA COLLISION AVEC LA TABLE
+// AJOUTER LA COLLISION AVEC LES TROUS
+// PLACER LA BLANCHE
+
+GameStatus GameState = GameStatus.CUEBALL;
+
 Ball[] balls;
 
 
 Rectangle view;
 
-int numberOfBalls = 16;
+int numberOfBalls = 16; // 15 + blanche
 int ballDiametre = 25;
-int whiteBall = 15;
+int cueBall = 15;
 
 void setup () {
   size (640, 480);
@@ -86,19 +97,19 @@ void displayBalls() {
 }
 
 // Initialise le triangle de jeu qui pointe vers le bas;
-// Initialise la blance qui est la dernière balle
+// Initialise la blanche qui est la dernière balle
 void initialiseBalles(PVector sommet) {
   int espacement = 2;
   int nbRangees = 5;
   
-  float angle = 30 * PI / 180; // Triangle équilatérale
+  float angle = 30 * PI / 180; // Triangle équilatérale 60
   
   // Déplacement entre chaque rangée
   PVector rowOffset = new PVector ( (ballDiametre + espacement) * sin(angle), (ballDiametre + espacement) * cos (angle));
   
   float offsetHorizontal = rowOffset.x * 2; // Espace entre chaque balle
-  int index = 0;
   
+  int index = 0;
   int startIndex = 0;
   for (int j = 0; j < nbRangees; j++) {
     if (index > numberOfBalls) break;
@@ -112,6 +123,6 @@ void initialiseBalles(PVector sommet) {
   }
   
   // cueBall
-  balls[whiteBall] = new Ball (sommet.x, sommet.y + height / 3, ballDiametre);
-  balls[whiteBall].velocity = new PVector (0, -5);
+  balls[cueBall] = new Ball (sommet.x, sommet.y + height / 3, ballDiametre);
+  balls[cueBall].velocity = new PVector (0, -5);
 }
